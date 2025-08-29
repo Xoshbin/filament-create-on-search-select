@@ -1,29 +1,27 @@
 {
-    "name": ":vendor_slug/:package_slug",
-    "description": ":package_description",
+    "name": "xoshbin/filament-create-on-search-select",
+    "description": "This is my package filament-create-on-search-select",
     "keywords": [
-        ":vendor_name",
+        "Xoshbin",
         "laravel",
-        ":package_slug"
+        "filament-create-on-search-select"
     ],
-    "homepage": "https://github.com/:vendor_slug/:package_slug",
+    "homepage": "https://github.com/xoshbin/filament-create-on-search-select",
     "support": {
-        "issues": "https://github.com/:vendor_slug/:package_slug/issues",
-        "source": "https://github.com/:vendor_slug/:package_slug"
+        "issues": "https://github.com/xoshbin/filament-create-on-search-select/issues",
+        "source": "https://github.com/xoshbin/filament-create-on-search-select"
     },
     "license": "MIT",
     "authors": [
         {
-            "name": ":author_name",
-            "email": "author@domain.com",
+            "name": "Khoshbin",
+            "email": "xoshbin@gmail.com",
             "role": "Developer"
         }
     ],
     "require": {
         "php": "^8.1",
-        "filament/filament": "^3.0",
         "filament/forms": "^3.0",
-        "filament/tables": "^3.0",
         "spatie/laravel-package-tools": "^1.15.0"
     },
     "require-dev": {
@@ -41,13 +39,13 @@
     },
     "autoload": {
         "psr-4": {
-            "VendorName\\Skeleton\\": "src/",
-            "VendorName\\Skeleton\\Database\\Factories\\": "database/factories/"
+            "Xoshbin\\FilamentCreateOnSearchSelect\\": "src/",
+            "Xoshbin\\FilamentCreateOnSearchSelect\\Database\\Factories\\": "database/factories/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "VendorName\\Skeleton\\Tests\\": "tests/"
+            "Xoshbin\\FilamentCreateOnSearchSelect\\Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -67,10 +65,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "VendorName\\Skeleton\\SkeletonServiceProvider"
+                "Xoshbin\\FilamentCreateOnSearchSelect\\FilamentCreateOnSearchSelectServiceProvider"
             ],
             "aliases": {
-                "Skeleton": "VendorName\\Skeleton\\Facades\\Skeleton"
+                "FilamentCreateOnSearchSelect": "Xoshbin\\FilamentCreateOnSearchSelect\\Facades\\FilamentCreateOnSearchSelect"
             }
         }
     },

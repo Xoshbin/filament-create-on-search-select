@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace Xoshbin\FilamentCreateOnSearchSelect\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class FilamentCreateOnSearchSelectCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'filament-create-on-search-select';
 
     public $description = 'My command';
 

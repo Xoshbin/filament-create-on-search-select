@@ -1,6 +1,6 @@
 <?php
 
-namespace VendorName\Skeleton\Database\Factories;
+namespace Xoshbin\FilamentCreateOnSearchSelect\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 
