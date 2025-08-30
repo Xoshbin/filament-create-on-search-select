@@ -69,6 +69,16 @@
     }"
     x-load-css="[@js(\Filament\Support\Facades\FilamentAsset::getStyleHref('filament-create-on-search-select-styles', package: 'xoshbin/filament-create-on-search-select'))]"
     x-load-js="[@js(\Filament\Support\Facades\FilamentAsset::getScriptSrc('filament-create-on-search-select-scripts', package: 'xoshbin/filament-create-on-search-select'))]"
+    x-effect="
+        if (!isOpen) {
+            const selected = $refs.select?.selectedOptions?.[0];
+            const label = selected && selected.value ? selected.textContent.trim() : '';
+            if (label !== searchTerm) {
+                searchTerm = label;
+                updateFilteredOptions();
+            }
+        }
+    "
 >
             <!-- Hidden select for form submission -->
             <select
@@ -153,14 +163,16 @@
                 x-transition:leave="transition ease-in duration-75"
                 x-transition:leave-start="transform opacity-100 scale-100"
                 x-transition:leave-end="transform opacity-0 scale-95"
-                class="absolute z-50 mt-1 w-full"
+                class="fi-dropdown-panel fi-scrollable absolute z-50 mt-1 w-full"
                 id="{{ $getId() }}-options"
                 role="listbox"
-                style="display:none;position:absolute;z-index:50;margin-top:.25rem;width:100%;background:#fff;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05);border-radius:.5rem;padding:.25rem 0;max-height:15rem;overflow:auto;"
+                style="display:none;position:absolute;z-index:50;margin-top:.25rem;width:100%;max-height:15rem;overflow:auto;"
             >
+                <div class="fi-dropdown-list">
                 <!-- Filtered options -->
                 <template x-for="(option, index) in filteredOptions" :key="option.value">
-                    <div
+                    <button
+                        type="button"
                         role="option"
                         x-on:mousedown.prevent.stop="selectOption(option.value)"
                         x-bind:class="{
@@ -168,14 +180,15 @@
                             'text-gray-900 dark:text-white': selectedIndex !== index
                         }"
                         x-bind:aria-selected="selectedIndex === index"
-                        class="cursor-pointer select-none" style="padding:.5rem .75rem;"
+                        class="fi-dropdown-list-item"
                     >
                         <span x-text="option.textContent" class="block truncate"></span>
-                    </div>
+                    </button>
                 </template>
 
                 <!-- Create option suggestion -->
-                <div
+                <button
+                    type="button"
                     role="option"
                     x-show="showCreateOption"
                     x-on:mousedown.prevent.stop="openCreateOptionModal()"
@@ -184,24 +197,25 @@
                         'text-gray-900 dark:text-white': selectedIndex !== filteredOptions.length
                     }"
                     x-bind:aria-selected="selectedIndex === filteredOptions.length"
-                    class="cursor-pointer select-none" style="padding:.5rem .75rem;border-top:1px solid #e5e7eb;"
+                    class="fi-dropdown-list-item"
                 >
                     <span class="flex items-center">
-                        <svg style="width:1rem;height:1rem;margin-right:0.5rem;color:#9ca3af;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg class="fi-icon text-gray-400 dark:text-gray-500 mr-2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
                         <span class="text-gray-600 dark:text-gray-300">Create "</span><span x-text="searchTerm" class="font-medium"></span><span class="text-gray-600 dark:text-gray-300">"</span>
                     </span>
-                </div>
+                </button>
 
                 <!-- No options message -->
                 <div
                     x-show="!showCreateOption && filteredOptions.length === 0 && searchTerm.length > 0"
-                    class="cursor-default select-none relative py-2 pl-3 pr-9 text-gray-500 dark:text-gray-400"
+                    class="fi-dropdown-header"
                 >
                     No options found
                 </div>
             </div>
+        </div>
 
 
 </div>
