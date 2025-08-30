@@ -1,12 +1,8 @@
 @php
     $canCreateOption = $getCanCreateOption();
-    $createOptionModalHeading = $getCreateOptionModalHeading();
-    $createOptionModalSubmitActionLabel = $getCreateOptionModalSubmitActionLabel();
-    $createOptionModalCancelActionLabel = $getCreateOptionModalCancelActionLabel();
-    $createOptionLabelAttribute = $getCreateOptionLabelAttribute();
-    $createOptionFormSchema = $getCreateOptionFormSchema();
     $statePath = $getStatePath();
-    $modalId = $getId() . '-create-option';
+    $createActionName = $createActionName ?? $getCreateOptionActionName();
+    $schemaComponentKey = $schemaComponentKey ?? $getKey();
 @endphp
 
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
@@ -19,15 +15,13 @@
             ])
     }}
     x-data="{
-        createOptionModalOpen: false,
-        createOptionData: {},
-        createOptionErrors: {},
-        createOptionLoading: false,
         searchTerm: '',
         isOpen: false,
         selectedIndex: -1,
         filteredOptions: [],
         showCreateOption: false,
+        createActionName: '{{ $createActionName }}',
+        schemaComponentKey: '{{ $schemaComponentKey }}',
 
         init() {
             // Initialize from current selected option
@@ -52,55 +46,18 @@
             this.selectedIndex = -1;
         },
 
-        openCreateOptionModal() {
-            this.createOptionModalOpen = true;
-            this.createOptionData = {};
-            this.createOptionData['{{ $createOptionLabelAttribute }}'] = this.searchTerm;
+        async openCreateOptionModal() {
             this.isOpen = false;
-            this.$nextTick(() => this.$dispatch('open-modal', { id: '{{ $modalId }}' }))
-        },
 
-        closeCreateOptionModal() {
-            this.createOptionModalOpen = false;
-            this.createOptionData = {};
-            this.$dispatch('close-modal', { id: '{{ $modalId }}' })
-        },
-
-        async createOption() {
-            if (this.createOptionLoading) return;
-
-            this.createOptionLoading = true;
-            this.createOptionErrors = {};
-
-            try {
-                // Call the Livewire component method to create the option
-                const response = await $wire.call('createNewOption', '{{ $statePath }}', this.createOptionData);
-                if (response && response.success) {
-                    // Add the new option to the select
-                    const select = this.$refs.select;
-                    const newOption = document.createElement('option');
-                    newOption.value = response.record.id;
-                    newOption.textContent = response.record.label;
-                    newOption.selected = true;
-                    select.appendChild(newOption);
-
-                    // Update the wire model
-                    $wire.set('{{ $statePath }}', response.record.id);
-
-                    this.closeCreateOptionModal();
-                    this.searchTerm = newOption.textContent;
-                    this.updateFilteredOptions();
-                    this.createOptionData = {};
-                } else if (response && response.errors) {
-                    this.createOptionErrors = response.errors;
+            // Mount and open the field's internal create action modal via Filament actions system
+            if (window.Livewire) {
+                const lw = window.Livewire.find(this.$root.closest('[wire\\:id]')?.getAttribute('wire:id'));
+                if (lw && typeof lw.mountAction === 'function') {
+                    lw.mountAction(this.createActionName, {}, { schemaComponent: this.schemaComponentKey });
                 }
-            } catch (error) {
-                console.error('Error creating option:', error);
-                this.createOptionErrors = { general: ['An error occurred while creating the option.'] };
-            } finally {
-                this.createOptionLoading = false;
             }
         },
+
 
         selectOption(value) {
             this.$refs.select.value = value;
@@ -238,94 +195,6 @@
                 </div>
             </div>
 
-            @if ($canCreateOption)
-                <x-filament::modal id="{{ $modalId }}" width="md">
-                    <x-slot name="heading">{{ $createOptionModalHeading }}</x-slot>
 
-                    <div class="space-y-4">
-                        @foreach ($createOptionFormSchema as $component)
-                            @php
-                                $componentName = $component->getName();
-                                $componentLabel = $component->getLabel();
-                                $componentType = class_basename($component);
-                                $isRequired = $component->isRequired();
-                                $placeholder = $component->getPlaceholder();
-                                $maxLength = method_exists($component, 'getMaxLength') ? $component->getMaxLength() : null;
-                            @endphp
-
-                            <div>
-                                @if ($componentLabel)
-                                    <label class="block text-sm font-medium text-gray-950 dark:text-white mb-2">
-                                        {{ $componentLabel }}
-                                        @if ($isRequired)
-                                            <span class="text-red-500">*</span>
-                                        @endif
-                                    </label>
-                                @endif
-
-                                @if ($componentType === 'TextInput')
-                                    <input
-                                        type="text"
-                                        x-model="createOptionData.{{ $componentName }}"
-                                        class="block w-full rounded-lg border-0 py-1.5 text-gray-950 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:placeholder:text-gray-500 dark:focus:ring-primary-500 sm:text-sm sm:leading-6"
-                                        @if ($placeholder) placeholder="{{ $placeholder }}" @endif
-                                        @if ($isRequired) required @endif
-                                        @if ($maxLength) maxlength="{{ $maxLength }}" @endif
-                                    />
-                                @elseif ($componentType === 'Textarea')
-                                    <textarea
-                                        x-model="createOptionData.{{ $componentName }}"
-                                        class="block w-full rounded-lg border-0 py-1.5 text-gray-950 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:placeholder:text-gray-500 dark:focus:ring-primary-500 sm:text-sm sm:leading-6"
-                                        @if ($placeholder) placeholder="{{ $placeholder }}" @endif
-                                        @if ($isRequired) required @endif
-                                        rows="3"
-                                    ></textarea>
-                                @endif
-
-                                @if (isset($createOptionErrors[$componentName]))
-                                    <div class="mt-1 text-sm text-red-600 dark:text-red-400">
-                                        @foreach ((array) $createOptionErrors[$componentName] as $error)
-                                            <div>{{ $error }}</div>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </div>
-                        @endforeach
-
-                        @if (isset($createOptionErrors['general']))
-                            <div class="text-sm text-red-600 dark:text-red-400">
-                                @foreach ((array) $createOptionErrors['general'] as $error)
-                                    <div>{{ $error }}</div>
-                                @endforeach
-                            </div>
-                        @endif
-                    </div>
-
-                    <x-slot name="footer">
-                        <x-filament::button
-                            color="gray"
-                            x-on:click="closeCreateOptionModal()"
-                            x-bind:disabled="createOptionLoading"
-                        >
-                            {{ $createOptionModalCancelActionLabel }}
-                        </x-filament::button>
-                        <x-filament::button
-                            color="primary"
-                            x-on:click="createOption()"
-                            x-bind:disabled="createOptionLoading"
-                            x-bind:class="{ 'opacity-50': createOptionLoading }"
-                        >
-                            <span x-show="!createOptionLoading">{{ $createOptionModalSubmitActionLabel }}</span>
-                            <span x-show="createOptionLoading" class="flex items-center">
-                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Creating...
-                            </span>
-                        </x-filament::button>
-                    </x-slot>
-                </x-filament::modal>
-            @endif
 </div>
 </x-dynamic-component>

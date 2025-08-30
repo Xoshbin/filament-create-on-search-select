@@ -4,24 +4,19 @@ namespace Xoshbin\FilamentCreateOnSearchSelect;
 
 use Closure;
 use Filament\Forms\Components\Select;
+use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
 
 class CreateOnSearchSelect extends Select
 {
     protected string $view = 'filament-create-on-search-select::create-on-search-select';
 
-    protected array | Closure | null $createOptionForm = null;
-
+    // Backwards-compatible properties for developers using this package API
     protected string | Closure | null $createOptionModalHeading = null;
-
     protected string | Closure | null $createOptionModalSubmitActionLabel = null;
-
     protected string | Closure | null $createOptionModalCancelActionLabel = null;
-
-    protected Closure | null $createOptionAction = null;
-
+    protected Closure | null $createOptionAction = null; // developer callback returning Model
     protected bool | Closure $canCreateOption = false;
-
     protected string | Closure | null $createOptionLabelAttribute = 'name';
 
     protected function setUp(): void
@@ -33,6 +28,14 @@ class CreateOnSearchSelect extends Select
         $this->createOptionModalSubmitActionLabel('Create');
         $this->createOptionModalCancelActionLabel('Cancel');
         $this->createOptionLabelAttribute('name');
+
+        // Hide native suffix "+" icon; open via the "Create \"term\"" suggestion instead.
+        $this->suffixActions([]);
+
+        // Ensure our internal create action is available to the Livewire actions system.
+        $this->registerActions([
+            fn () => $this->getCreateOptionAction(),
+        ]);
     }
 
     public function getViewData(): array
@@ -49,19 +52,19 @@ class CreateOnSearchSelect extends Select
             return $state == $value;
         };
 
-        // Add modal-related data
-        $data['createOptionModalHeading'] = $this->getCreateOptionModalHeading();
-        $data['createOptionModalSubmitActionLabel'] = $this->getCreateOptionModalSubmitActionLabel();
-        $data['createOptionModalCancelActionLabel'] = $this->getCreateOptionModalCancelActionLabel();
+        // Expose data needed to open the native Filament action modal programmatically
         $data['canCreateOption'] = $this->getCanCreateOption();
-        $data['createOptionFormSchema'] = $this->getCreateOptionFormSchema();
+        $data['createActionName'] = $this->getCreateOptionActionName();
+        $data['schemaComponentKey'] = $this->getKey();
 
         return $data;
     }
 
+    // Package API (back-compat)
     public function createOptionForm(Closure | array | null $form): static
     {
-        $this->createOptionForm = $form;
+        // Forward to the native Select implementation so the built-in action detects the schema.
+        parent::createOptionForm($form);
 
         return $this;
     }
@@ -87,9 +90,25 @@ class CreateOnSearchSelect extends Select
         return $this;
     }
 
+    // Bridge legacy API to Filament v4 Select's createOptionUsing(),
+    // which expects the closure to return the created option's key.
     public function createOptionAction(Closure | null $action): static
     {
-        $this->createOptionAction = $action;
+        if ($action) {
+            parent::createOptionUsing(function (array $data, Schema $schema) use ($action) {
+                $result = $this->evaluate($action, [
+                    'data' => $data,
+                    'form' => $schema,
+                    'schema' => $schema,
+                ]);
+
+                if ($result instanceof Model) {
+                    return $result->getKey();
+                }
+
+                return $result; // assume primary key
+            });
+        }
 
         return $this;
     }
