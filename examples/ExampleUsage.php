@@ -3,17 +3,16 @@
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
 use App\Models\Customer;
-use App\Models\Invoice;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Pages\CreateRecord;
-use Xoshbin\FilamentCreateOnSearchSelect\CreateOnSearchSelect;
 use Xoshbin\FilamentCreateOnSearchSelect\Concerns\HasCreateOnSearchSelect;
+use Xoshbin\FilamentCreateOnSearchSelect\CreateOnSearchSelect;
 
 class CreateInvoice extends CreateRecord
 {
     use HasCreateOnSearchSelect; // Required trait for CreateOnSearchSelect functionality
-    
+
     protected static string $resource = InvoiceResource::class;
 
     public function form(Form $form): Form
@@ -74,7 +73,7 @@ class CreateInvoice extends CreateRecord
                 TextInput::make('invoice_number')
                     ->label('Invoice Number')
                     ->required(),
-                
+
                 // ... more fields
             ]);
     }

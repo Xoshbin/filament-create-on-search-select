@@ -1,7 +1,7 @@
 <?php
 
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Model;
 use Xoshbin\FilamentCreateOnSearchSelect\CreateOnSearchSelect;
 
@@ -45,9 +45,14 @@ it('provides default form schema when none is set', function () {
 
 it('can set custom create option action', function () {
     $action = function (array $data) {
-        return new class extends Model {
+        return new class extends Model
+        {
             protected $fillable = ['name'];
-            public function getKey() { return 1; }
+
+            public function getKey()
+            {
+                return 1;
+            }
         };
     };
 
@@ -95,10 +100,17 @@ it('validates max length in create option data', function () {
 });
 
 it('returns success response when creating option with valid data', function () {
-    $mockRecord = new class extends Model {
+    $mockRecord = new class extends Model
+    {
         protected $fillable = ['name'];
-        public function getKey() { return 123; }
-        public function getAttribute($key) {
+
+        public function getKey()
+        {
+            return 123;
+        }
+
+        public function getAttribute($key)
+        {
             return $key === 'name' ? 'Test Name' : null;
         }
     };
@@ -139,15 +151,21 @@ it('handles exceptions during option creation', function () {
 });
 
 it('gets correct label from created record', function () {
-    $record = new class extends Model {
-        public function getAttribute($key) {
-            return match($key) {
+    $record = new class extends Model
+    {
+        public function getAttribute($key)
+        {
+            return match ($key) {
                 'name' => 'Test Name',
                 'title' => 'Test Title',
                 default => null,
             };
         }
-        public function getKey() { return 1; }
+
+        public function getKey()
+        {
+            return 1;
+        }
     };
 
     // Test with default label attribute
@@ -192,18 +210,25 @@ it('works with the target API usage pattern', function () {
                 ->maxLength(255),
         ])
         ->createOptionAction(function (array $data) {
-            return new class($data) extends Model {
+            return new class($data) extends Model
+            {
                 protected $fillable = ['name'];
+
                 private $data;
 
-                public function __construct($data = []) {
+                public function __construct($data = [])
+                {
                     $this->data = $data;
                     parent::__construct();
                 }
 
-                public function getKey() { return 999; }
+                public function getKey()
+                {
+                    return 999;
+                }
 
-                public function getAttribute($key) {
+                public function getAttribute($key)
+                {
                     return $this->data[$key] ?? null;
                 }
             };

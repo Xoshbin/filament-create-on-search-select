@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
-use App\Models\Partner;
 use App\Enums\Partners\PartnerType;
-use Filament\Forms\Components\TextInput;
+use App\Models\Partner;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Pages\CreateRecord;
 use Xoshbin\FilamentCreateOnSearchSelect\CreateOnSearchSelect;
@@ -109,6 +109,7 @@ class CreateInvoice extends CreateRecord
     public function createNewOption(string $statePath, array $data)
     {
         $field = $this->getFormComponent($statePath);
+
         return $field->createNewOptionWithValidation($data);
     }
 }
