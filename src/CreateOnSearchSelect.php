@@ -13,10 +13,15 @@ class CreateOnSearchSelect extends Select
 
     // Backwards-compatible properties for developers using this package API
     protected string | Closure | null $createOptionModalHeading = null;
+
     protected string | Closure | null $createOptionModalSubmitActionLabel = null;
+
     protected string | Closure | null $createOptionModalCancelActionLabel = null;
-    protected Closure | null $createOptionAction = null; // developer callback returning Model
+
+    protected ?Closure $createOptionAction = null; // developer callback returning Model
+
     protected bool | Closure $canCreateOption = false;
+
     protected string | Closure | null $createOptionLabelAttribute = 'name';
 
     protected function setUp(): void
@@ -92,7 +97,7 @@ class CreateOnSearchSelect extends Select
 
     // Bridge legacy API to Filament v4 Select's createOptionUsing(),
     // which expects the closure to return the created option's key.
-    public function createOptionAction(Closure | null $action): static
+    public function createOptionAction(?Closure $action): static
     {
         if ($action) {
             parent::createOptionUsing(function (array $data, Schema $schema) use ($action) {
@@ -146,8 +151,6 @@ class CreateOnSearchSelect extends Select
     {
         return $this->evaluate($this->createOptionModalCancelActionLabel);
     }
-
-
 
     public function getCanCreateOption(): bool
     {
@@ -239,7 +242,7 @@ class CreateOnSearchSelect extends Select
         try {
             // Validate the data against the form schema
             $errors = $this->validateCreateOptionData($data);
-            if (!empty($errors)) {
+            if (! empty($errors)) {
                 return [
                     'success' => false,
                     'errors' => $errors,
@@ -272,7 +275,7 @@ class CreateOnSearchSelect extends Select
         try {
             // Validate the data against the form schema
             $errors = $this->validateCreateOptionData($data);
-            if (!empty($errors)) {
+            if (! empty($errors)) {
                 return [
                     'success' => false,
                     'errors' => $errors,

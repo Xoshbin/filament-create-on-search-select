@@ -2,8 +2,8 @@
 
 namespace Xoshbin\FilamentCreateOnSearchSelect\Concerns;
 
-use Illuminate\Support\Str;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Str;
 
 trait HasCreateOnSearchSelect
 {
@@ -14,8 +14,8 @@ trait HasCreateOnSearchSelect
      * creates a new option. It finds the field by its state path and delegates
      * the creation to the field's handleCreateNewOption method.
      *
-     * @param string $statePath The state path of the field
-     * @param array $data The form data for creating the new option
+     * @param  string  $statePath  The state path of the field
+     * @param  array  $data  The form data for creating the new option
      * @return array Response with success status and record data or errors
      */
     public function createNewOption(string $statePath, array $data): array
@@ -61,7 +61,7 @@ trait HasCreateOnSearchSelect
      * This method traverses the form schema to find a component by its state path.
      * It supports nested components and dot notation paths.
      *
-     * @param string $statePath The state path to search for
+     * @param  string  $statePath  The state path to search for
      * @return mixed|null The form component or null if not found
      */
     protected function getFormComponent(string $statePath)
@@ -122,8 +122,8 @@ trait HasCreateOnSearchSelect
     /**
      * Recursively find a component in a schema by its state path
      *
-     * @param array $components The components to search through
-     * @param string $statePath The state path to find
+     * @param  array  $components  The components to search through
+     * @param  string  $statePath  The state path to find
      * @return mixed|null The component or null if not found
      */
     protected function findComponentInSchema(array $components, string $statePath)
