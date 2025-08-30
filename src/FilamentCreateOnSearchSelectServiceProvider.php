@@ -27,5 +27,4 @@ class FilamentCreateOnSearchSelectServiceProvider extends PackageServiceProvider
             Js::make('filament-create-on-search-select-scripts', __DIR__ . '/../resources/dist/filament-create-on-search-select.js')->loadedOnRequest(),
         ], 'xoshbin/filament-create-on-search-select');
     }
-
 }

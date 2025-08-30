@@ -45,6 +45,7 @@ class CreateOnSearchSelect extends Select
             if (is_array($state)) {
                 return in_array($value, $state);
             }
+
             return $state == $value;
         };
 
