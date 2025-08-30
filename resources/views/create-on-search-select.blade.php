@@ -22,6 +22,7 @@
         showCreateOption: false,
         createActionName: '{{ $createActionName }}',
         schemaComponentKey: '{{ $schemaComponentKey }}',
+        state: $wire.entangle('{{ $statePath }}'),
 
         init() {
             // Initialize from current selected option
@@ -30,6 +31,18 @@
                 this.searchTerm = selected.textContent?.trim() ?? '';
             }
             this.updateFilteredOptions();
+
+            // Watch for state changes to update the visible label
+            this.$watch('state', (newValue) => {
+                if (newValue && this.$refs.select) {
+                    // Find the option with the new value
+                    const option = Array.from(this.$refs.select.options).find(o => o.value == newValue);
+                    if (option && !this.isOpen) {
+                        this.searchTerm = option.textContent.trim();
+                        this.updateFilteredOptions();
+                    }
+                }
+            });
         },
 
         updateFilteredOptions() {
@@ -53,7 +66,7 @@
             if (window.Livewire) {
                 const lw = window.Livewire.find(this.$root.closest('[wire\\:id]')?.getAttribute('wire:id'));
                 if (lw && typeof lw.mountAction === 'function') {
-                    lw.mountAction(this.createActionName, {}, { schemaComponent: this.schemaComponentKey });
+                    lw.mountAction(this.createActionName, { term: this.searchTerm }, { schemaComponent: this.schemaComponentKey });
                 }
             }
         },
@@ -70,6 +83,12 @@
     x-load-css="[@js(\Filament\Support\Facades\FilamentAsset::getStyleHref('filament-create-on-search-select-styles', package: 'xoshbin/filament-create-on-search-select'))]"
     x-load-js="[@js(\Filament\Support\Facades\FilamentAsset::getScriptSrc('filament-create-on-search-select-scripts', package: 'xoshbin/filament-create-on-search-select'))]"
     x-effect="
+        // Ensure the hidden select reflects Livewire state
+        if ($refs.select && $refs.select.value != state) {
+            $refs.select.value = state ?? '';
+        }
+
+        // When dropdown is closed or after state changes, sync the visible label
         if (!isOpen) {
             const selected = $refs.select?.selectedOptions?.[0];
             const label = selected && selected.value ? selected.textContent.trim() : '';
@@ -77,6 +96,25 @@
                 searchTerm = label;
                 updateFilteredOptions();
             }
+        }
+    "
+    x-on:action-finished.window="
+        // Listen for Filament action completion to refresh options and sync state
+        if ($event.detail.id === createActionName) {
+            // Wait a moment for Livewire to update, then refresh our state
+            setTimeout(() => {
+                // Force re-render of options by triggering a state check
+                if ($refs.select) {
+                    const currentValue = $refs.select.value;
+                    if (currentValue && currentValue !== '') {
+                        const option = Array.from($refs.select.options).find(o => o.value == currentValue);
+                        if (option) {
+                            searchTerm = option.textContent.trim();
+                            updateFilteredOptions();
+                        }
+                    }
+                }
+            }, 100);
         }
     "
     x-on:click.outside="isOpen = false"

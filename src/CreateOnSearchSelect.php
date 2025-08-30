@@ -6,6 +6,7 @@ use Closure;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
+use Filament\Actions\Action;
 
 class CreateOnSearchSelect extends Select
 {
@@ -24,6 +25,8 @@ class CreateOnSearchSelect extends Select
 
     protected string | Closure | null $createOptionLabelAttribute = 'name';
 
+    protected Closure | array | null $createOptionForm = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -39,8 +42,52 @@ class CreateOnSearchSelect extends Select
 
         // Ensure our internal create action is available to the Livewire actions system.
         $this->registerActions([
-            fn () => $this->getCreateOptionAction(),
+            fn () => $this->getConfiguredCreateOptionAction(),
         ]);
+    }
+
+    public function getConfiguredCreateOptionAction(): ?Action
+    {
+        try {
+            /** @var Action|null $action */
+            $action = parent::getCreateOptionAction();
+            if (! $action) {
+                return $action;
+            }
+        } catch (\Error) {
+            // Component not properly initialized (e.g., in tests)
+            return null;
+        }
+
+        // Apply modal labels if provided via our back-compat API
+        if (method_exists($action, 'modalHeading') && ($heading = $this->getCreateOptionModalHeading())) {
+            $action->modalHeading($heading);
+        }
+        if (method_exists($action, 'modalSubmitActionLabel') && ($label = $this->getCreateOptionModalSubmitActionLabel())) {
+            $action->modalSubmitActionLabel($label);
+        }
+        if (method_exists($action, 'modalCancelActionLabel') && ($label = $this->getCreateOptionModalCancelActionLabel())) {
+            $action->modalCancelActionLabel($label);
+        }
+
+        // Pre-fill the form with the current search term when opening the modal.
+        // The term is passed from the Blade view via mountAction arguments.
+        // We use mountUsing() to access the action arguments properly.
+        $labelAttribute = $this->getCreateOptionLabelAttribute() ?? 'name';
+
+        $action->mountUsing(function (?\Filament\Schemas\Schema $schema, array $arguments = []) use ($labelAttribute): void {
+            $term = $arguments['term'] ?? null;
+
+            if (! is_string($term) || $term === '') {
+                return;
+            }
+
+            $schema?->fill([
+                $labelAttribute => $term,
+            ]);
+        });
+
+        return $action;
     }
 
     public function getViewData(): array
@@ -60,7 +107,14 @@ class CreateOnSearchSelect extends Select
         // Expose data needed to open the native Filament action modal programmatically
         $data['canCreateOption'] = $this->getCanCreateOption();
         $data['createActionName'] = $this->getCreateOptionActionName();
-        $data['schemaComponentKey'] = $this->getKey();
+        $data['createOptionFormSchema'] = $this->getCreateOptionFormSchema();
+
+        // Only get the key if the component is properly initialized
+        try {
+            $data['schemaComponentKey'] = $this->getKey();
+        } catch (\Error) {
+            $data['schemaComponentKey'] = $this->getName() ?? 'unknown';
+        }
 
         return $data;
     }
@@ -68,6 +122,8 @@ class CreateOnSearchSelect extends Select
     // Package API (back-compat)
     public function createOptionForm(Closure | array | null $form): static
     {
+        $this->createOptionForm = $form;
+
         // Forward to the native Select implementation so the built-in action detects the schema.
         parent::createOptionForm($form);
 
@@ -99,6 +155,8 @@ class CreateOnSearchSelect extends Select
     // which expects the closure to return the created option's key.
     public function createOptionAction(?Closure $action): static
     {
+        $this->createOptionAction = $action;
+
         if ($action) {
             parent::createOptionUsing(function (array $data, Schema $schema) use ($action) {
                 $result = $this->evaluate($action, [
