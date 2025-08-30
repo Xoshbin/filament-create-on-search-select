@@ -5,6 +5,8 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/xoshbin/filament-create-on-search-select/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/xoshbin/filament-create-on-search-select/actions?query=workflow%3A"Fix+PHP+code+styling"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/xoshbin/filament-create-on-search-select.svg?style=flat-square)](https://packagist.org/packages/xoshbin/filament-create-on-search-select)
 
+![Filament Create On Search Select Preview](./.github/resources/preview.png)
+
 A space-efficient Filament form field that solves the interface clutter problem of the original Select field's creation functionality. While Filament's native Select field adds a suffix button and icon for creating new records (which takes up valuable interface space), this component provides a cleaner, more intuitive solution.
 
 ## The Problem This Solves
