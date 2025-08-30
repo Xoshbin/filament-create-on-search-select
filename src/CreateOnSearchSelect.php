@@ -3,10 +3,10 @@
 namespace Xoshbin\FilamentCreateOnSearchSelect;
 
 use Closure;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
-use Filament\Actions\Action;
 
 class CreateOnSearchSelect extends Select
 {
