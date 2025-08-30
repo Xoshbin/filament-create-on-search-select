@@ -118,20 +118,38 @@ CreateOnSearchSelect::make('customer_id')
     })
 ```
 
-#### Required Livewire Method
+#### Required Setup for Filament v4
 
-When using `CreateOnSearchSelect`, you must add this method to your Livewire component (Form, Resource Page, etc.):
+When using `CreateOnSearchSelect`, you must add the trait to your Livewire component (Form, Resource Page, etc.):
 
 ```php
-/**
- * Required method for CreateOnSearchSelect functionality
- */
-public function createNewOption(string $statePath, array $data)
+use Xoshbin\FilamentCreateOnSearchSelect\Concerns\HasCreateOnSearchSelect;
+
+class CreateInvoice extends CreateRecord
 {
-    $field = $this->getFormComponent($statePath);
-    return $field->createNewOptionWithValidation($data);
+    use HasCreateOnSearchSelect;
+
+    protected static string $resource = InvoiceResource::class;
+
+    // Your existing code...
 }
 ```
+
+Or for custom Livewire components:
+
+```php
+use Livewire\Component;
+use Xoshbin\FilamentCreateOnSearchSelect\Concerns\HasCreateOnSearchSelect;
+
+class MyCustomForm extends Component
+{
+    use HasCreateOnSearchSelect;
+
+    // Your existing code...
+}
+```
+
+The trait automatically provides the `createNewOption()` method that the component needs to function properly.
 
 #### Custom Modal Labels
 

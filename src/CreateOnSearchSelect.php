@@ -212,6 +212,40 @@ class CreateOnSearchSelect extends Select
     }
 
     /**
+     * Handle creating a new option from the parent Livewire component
+     * This method should be called from the parent component's createNewOption method
+     */
+    public function handleCreateNewOption(array $data): array
+    {
+        try {
+            // Validate the data against the form schema
+            $errors = $this->validateCreateOptionData($data);
+            if (!empty($errors)) {
+                return [
+                    'success' => false,
+                    'errors' => $errors,
+                ];
+            }
+
+            // Create the record
+            $record = $this->createOption($data);
+
+            return [
+                'success' => true,
+                'record' => [
+                    'id' => $record->getKey(),
+                    'label' => $this->getCreatedOptionLabel($record),
+                ],
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'errors' => ['general' => [$e->getMessage()]],
+            ];
+        }
+    }
+
+    /**
      * Create a new option with validation and proper response structure
      */
     public function createNewOptionWithValidation(array $data): array
