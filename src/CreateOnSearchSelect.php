@@ -22,13 +22,39 @@ class CreateOnSearchSelect extends Select
 
     protected bool | Closure $canCreateOption = false;
 
+    protected string | Closure | null $createOptionLabelAttribute = 'name';
+
     protected function setUp(): void
     {
         parent::setUp();
 
+        $this->searchable();
         $this->createOptionModalHeading('Create New Option');
         $this->createOptionModalSubmitActionLabel('Create');
         $this->createOptionModalCancelActionLabel('Cancel');
+        $this->createOptionLabelAttribute('name');
+    }
+
+    public function getViewData(): array
+    {
+        $data = parent::getViewData();
+
+        // Add the isSelected function that the view expects
+        $data['isSelected'] = function ($value) {
+            $state = $this->getState();
+            if (is_array($state)) {
+                return in_array($value, $state);
+            }
+            return $state == $value;
+        };
+
+        // Add modal-related data
+        $data['createOptionModalHeading'] = $this->getCreateOptionModalHeading();
+        $data['createOptionModalSubmitActionLabel'] = $this->getCreateOptionModalSubmitActionLabel();
+        $data['createOptionModalCancelActionLabel'] = $this->getCreateOptionModalCancelActionLabel();
+        $data['canCreateOption'] = $this->getCanCreateOption();
+
+        return $data;
     }
 
     public function createOptionForm(Closure | array | null $form): static
@@ -73,6 +99,13 @@ class CreateOnSearchSelect extends Select
         return $this;
     }
 
+    public function createOptionLabelAttribute(string | Closure | null $attribute): static
+    {
+        $this->createOptionLabelAttribute = $attribute;
+
+        return $this;
+    }
+
     public function getCreateOptionForm(): array | string | null
     {
         return $this->evaluate($this->createOptionForm);
@@ -103,6 +136,11 @@ class CreateOnSearchSelect extends Select
         return $this->evaluate($this->canCreateOption);
     }
 
+    public function getCreateOptionLabelAttribute(): ?string
+    {
+        return $this->evaluate($this->createOptionLabelAttribute);
+    }
+
     public function createOption(array $data): Model
     {
         $action = $this->getCreateOptionCallback();
@@ -118,5 +156,36 @@ class CreateOnSearchSelect extends Select
         }
 
         throw new \Exception('No create action defined and no relationship found.');
+    }
+
+    protected function getCreateOptionFormSchema(): array
+    {
+        $form = $this->getCreateOptionForm();
+
+        if (is_array($form)) {
+            return $form;
+        }
+
+        // Default form schema
+        return [
+            \Filament\Forms\Components\TextInput::make($this->getCreateOptionLabelAttribute())
+                ->label(ucfirst(str_replace('_', ' ', $this->getCreateOptionLabelAttribute())))
+                ->required(),
+        ];
+    }
+
+    /**
+     * This method should be called from the Livewire component that uses this field
+     * Add this to your Livewire component:
+     *
+     * public function createNewOption(string $statePath, array $data)
+     * {
+     *     $field = $this->getFormComponent($statePath);
+     *     return $field->createOption($data);
+     * }
+     */
+    public function getCreateNewOptionMethod(): string
+    {
+        return 'createNewOption';
     }
 }
