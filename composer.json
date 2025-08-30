@@ -21,7 +21,7 @@
     ],
     "require": {
         "php": "^8.1",
-        "filament/forms": "^3.0",
+        "filament/forms": "^4.0",
         "spatie/laravel-package-tools": "^1.15.0"
     },
     "require-dev": {
@@ -39,8 +39,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Xoshbin\\FilamentCreateOnSearchSelect\\": "src/",
-            "Xoshbin\\FilamentCreateOnSearchSelect\\Database\\Factories\\": "database/factories/"
+            "Xoshbin\\FilamentCreateOnSearchSelect\\": "src/"
         }
     },
     "autoload-dev": {
@@ -66,10 +65,7 @@
         "laravel": {
             "providers": [
                 "Xoshbin\\FilamentCreateOnSearchSelect\\FilamentCreateOnSearchSelectServiceProvider"
-            ],
-            "aliases": {
-                "FilamentCreateOnSearchSelect": "Xoshbin\\FilamentCreateOnSearchSelect\\Facades\\FilamentCreateOnSearchSelect"
-            }
+            ]
         }
     },
     "minimum-stability": "dev",
