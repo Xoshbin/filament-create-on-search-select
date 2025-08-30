@@ -31,18 +31,44 @@
                 this.searchTerm = selected.textContent?.trim() ?? '';
             }
             this.updateFilteredOptions();
+            this.syncState();
+        },
 
-            // Watch for state changes to update the visible label
-            this.$watch('state', (newValue) => {
-                if (newValue && this.$refs.select) {
-                    // Find the option with the new value
-                    const option = Array.from(this.$refs.select.options).find(o => o.value == newValue);
-                    if (option && !this.isOpen) {
+        syncState() {
+            // Ensure the hidden select reflects Livewire state
+            if (this.$refs.select && this.$refs.select.value != this.state) {
+                this.$refs.select.value = this.state ?? '';
+            }
+
+            // When dropdown is closed or after state changes, sync the visible label
+            if (!this.isOpen) {
+                const selected = this.$refs.select?.selectedOptions?.[0];
+                const label = selected && selected.value ? selected.textContent.trim() : '';
+                if (label !== this.searchTerm) {
+                    this.searchTerm = label;
+                    this.updateFilteredOptions();
+                }
+            }
+        },
+
+        handleActionFinished(event) {
+            if (event.detail.id !== this.createActionName) {
+                return;
+            }
+
+            // Wait a moment for Livewire to update, then refresh our state
+            setTimeout(() => {
+                if (!this.$refs.select) return;
+
+                const currentValue = this.$refs.select.value;
+                if (currentValue && currentValue !== '') {
+                    const option = Array.from(this.$refs.select.options).find(o => o.value == currentValue);
+                    if (option) {
                         this.searchTerm = option.textContent.trim();
                         this.updateFilteredOptions();
                     }
                 }
-            });
+            }, 100);
         },
 
         updateFilteredOptions() {
@@ -80,43 +106,9 @@
             this.isOpen = false;
         }
     }"
-    x-load-css="[@js(\Filament\Support\Facades\FilamentAsset::getStyleHref('filament-create-on-search-select-styles', package: 'xoshbin/filament-create-on-search-select'))]"
-    x-load-js="[@js(\Filament\Support\Facades\FilamentAsset::getScriptSrc('filament-create-on-search-select-scripts', package: 'xoshbin/filament-create-on-search-select'))]"
-    x-effect="
-        // Ensure the hidden select reflects Livewire state
-        if ($refs.select && $refs.select.value != state) {
-            $refs.select.value = state ?? '';
-        }
-
-        // When dropdown is closed or after state changes, sync the visible label
-        if (!isOpen) {
-            const selected = $refs.select?.selectedOptions?.[0];
-            const label = selected && selected.value ? selected.textContent.trim() : '';
-            if (label !== searchTerm) {
-                searchTerm = label;
-                updateFilteredOptions();
-            }
-        }
-    "
-    x-on:action-finished.window="
-        // Listen for Filament action completion to refresh options and sync state
-        if ($event.detail.id === createActionName) {
-            // Wait a moment for Livewire to update, then refresh our state
-            setTimeout(() => {
-                // Force re-render of options by triggering a state check
-                if ($refs.select) {
-                    const currentValue = $refs.select.value;
-                    if (currentValue && currentValue !== '') {
-                        const option = Array.from($refs.select.options).find(o => o.value == currentValue);
-                        if (option) {
-                            searchTerm = option.textContent.trim();
-                            updateFilteredOptions();
-                        }
-                    }
-                }
-            }, 100);
-        }
-    "
+    
+    x-effect="syncState()"
+    x-on:action-finished.window="handleActionFinished($event)"
     x-on:click.outside="isOpen = false"
 >
             <!-- Hidden select for form submission -->
