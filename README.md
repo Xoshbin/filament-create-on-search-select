@@ -12,8 +12,6 @@ A space-efficient Filament form field that solves the interface clutter problem 
 Filament's default Select field with `createOptionForm()` adds visual clutter:
 - ➕ Suffix button takes up horizontal space
 - 🎯 Icon makes the field wider and less clean
-- 📱 Poor mobile experience due to cramped interface
-- 👁️ Breaks the visual flow of forms
 
 ## The Solution
 
@@ -186,7 +184,6 @@ CreateOnSearchSelect::make('category_id')
 **Interface Benefits:**
 - ✅ **No visual clutter** - No suffix buttons or icons taking up space
 - ✅ **Clean design** - Maintains the original Select field appearance
-- ✅ **Mobile-friendly** - Better responsive experience without cramped buttons
 - ✅ **Intuitive UX** - "Create [search term]" suggestions feel natural
 
 **Technical Features:**
