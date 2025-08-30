@@ -11,7 +11,7 @@
         $attributes
             ->merge($getExtraAttributes(), escape: false)
             ->class([
-                'fi-fo-select relative',
+                'fi-fo-select relative fi-absolute-positioning-context',
             ])
     }}
     x-data="{
@@ -79,6 +79,7 @@
             }
         }
     "
+    x-on:click.outside="isOpen = false"
 >
             <!-- Hidden select for form submission -->
             <select
@@ -136,11 +137,13 @@
                             selectOption(filteredOptions[selectedIndex].value);
                         }
                     "
-                    x-on:keydown.escape="isOpen = false"
+                    x-on:keydown.escape="isOpen = false" x-on:keydown.tab="isOpen = false"
                     aria-autocomplete="list"
                     role="combobox"
                     x-bind:aria-expanded="isOpen"
                     aria-controls="{{ $getId() }}-options"
+                    aria-haspopup="listbox"
+                    x-bind:aria-activedescendant="selectedIndex >= 0 ? '{{ $getId() }}-opt-' + selectedIndex : (showCreateOption && selectedIndex === filteredOptions.length ? '{{ $getId() }}-opt-create' : null)"
                     {{
                         $attributes
                             ->merge($getExtraInputAttributes(), escape: false)
@@ -174,6 +177,7 @@
                     <button
                         type="button"
                         role="option"
+                        x-bind:id="'{{ $getId() }}-opt-' + index"
                         x-on:mousedown.prevent.stop="selectOption(option.value)"
                         x-bind:class="{
                             'bg-gray-50 text-gray-900 dark:bg-white/5 dark:text-white': selectedIndex === index,
@@ -190,6 +194,7 @@
                 <button
                     type="button"
                     role="option"
+                    id="{{ $getId() }}-opt-create"
                     x-show="showCreateOption"
                     x-on:mousedown.prevent.stop="openCreateOptionModal()"
                     x-bind:class="{
