@@ -104,8 +104,13 @@
                 @endforeach
             </select>
 
-            <!-- Custom search input that looks like Filament select -->
-            <div class="fi-input-wrp relative group" style="display:flex;align-items:center;gap:.75rem;border:1px solid rgba(17,24,39,0.1);border-radius:.5rem;background:#fff;padding:.25rem .5rem .25rem .75rem;">
+            <!-- Search input styled exactly like Filament input wrapper -->
+            <x-filament::input.wrapper
+                :disabled="$isDisabled()"
+                :valid="! $errors->has($getStatePath())"
+                suffixIcon="heroicon-m-chevron-down"
+                suffixIconColor="gray"
+            >
                 <input
                     type="text"
                     x-model="searchTerm"
@@ -122,25 +127,22 @@
                         }
                     "
                     x-on:keydown.escape="isOpen = false"
+                    aria-autocomplete="list"
+                    role="combobox"
+                    x-bind:aria-expanded="isOpen"
+                    aria-controls="{{ $getId() }}-options"
                     {{
                         $attributes
                             ->merge($getExtraInputAttributes(), escape: false)
                             ->class([
-                                'fi-select-input block w-full border-none bg-transparent py-1.5 pe-8 text-base text-gray-950 outline-none transition duration-75 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 disabled:[-webkit-text-fill-color:theme(colors.gray.500)] dark:text-white dark:placeholder:text-gray-500 dark:disabled:text-gray-400 dark:disabled:[-webkit-text-fill-color:theme(colors.gray.400)] sm:text-sm sm:leading-6',
+                                'fi-input block w-full bg-transparent text-base text-gray-950 placeholder:text-gray-400 focus:ring-0 disabled:text-gray-500 disabled:[-webkit-text-fill-color:theme(colors.gray.500)] dark:text-white dark:placeholder:text-gray-500 dark:disabled:text-gray-400 dark:disabled:[-webkit-text-fill-color:theme(colors.gray.400)] sm:text-sm sm:leading-6',
                             ])
                     }}
                     placeholder="{{ $getPlaceholder() ?: 'Search or type to create...' }}"
                     @if ($isDisabled()) disabled @endif
-                    autocomplete="off" style="flex:1;border:0;outline:0;background:transparent;padding:.375rem 0;font-size:.875rem;"
+                    autocomplete="off"
                 />
-
-                <!-- Dropdown arrow -->
-                <div style="position:absolute; right:0.5rem; top:50%; transform:translateY(-50%); display:flex; align-items:center; pointer-events:none;">
-                    <svg style="width:1.25rem;height:1.25rem;color:#9ca3af" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-            </div>
+            </x-filament::input.wrapper>
 
             <!-- Dropdown options -->
             <div
@@ -152,16 +154,20 @@
                 x-transition:leave-start="transform opacity-100 scale-100"
                 x-transition:leave-end="transform opacity-0 scale-95"
                 class="absolute z-50 mt-1 w-full"
+                id="{{ $getId() }}-options"
+                role="listbox"
                 style="display:none;position:absolute;z-index:50;margin-top:.25rem;width:100%;background:#fff;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05);border-radius:.5rem;padding:.25rem 0;max-height:15rem;overflow:auto;"
             >
                 <!-- Filtered options -->
                 <template x-for="(option, index) in filteredOptions" :key="option.value">
                     <div
+                        role="option"
                         x-on:mousedown.prevent.stop="selectOption(option.value)"
                         x-bind:class="{
                             'bg-gray-50 text-gray-900 dark:bg-white/5 dark:text-white': selectedIndex === index,
                             'text-gray-900 dark:text-white': selectedIndex !== index
                         }"
+                        x-bind:aria-selected="selectedIndex === index"
                         class="cursor-pointer select-none" style="padding:.5rem .75rem;"
                     >
                         <span x-text="option.textContent" class="block truncate"></span>
@@ -170,12 +176,14 @@
 
                 <!-- Create option suggestion -->
                 <div
+                    role="option"
                     x-show="showCreateOption"
                     x-on:mousedown.prevent.stop="openCreateOptionModal()"
                     x-bind:class="{
                         'bg-gray-50 text-gray-900 dark:bg-white/5 dark:text-white': selectedIndex === filteredOptions.length,
                         'text-gray-900 dark:text-white': selectedIndex !== filteredOptions.length
                     }"
+                    x-bind:aria-selected="selectedIndex === filteredOptions.length"
                     class="cursor-pointer select-none" style="padding:.5rem .75rem;border-top:1px solid #e5e7eb;"
                 >
                     <span class="flex items-center">
