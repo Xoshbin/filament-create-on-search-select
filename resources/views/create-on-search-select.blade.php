@@ -240,13 +240,13 @@
                         'text-gray-900 dark:text-white': selectedIndex !== filteredOptions.length
                     }"
                     x-bind:aria-selected="selectedIndex === filteredOptions.length"
-                    class="fi-dropdown-list-item"
+                    class="fi-dropdown-list-item flex items-center w-full"
                 >
-                    <span class="flex items-center">
-                        <svg class="fi-icon text-gray-400 dark:text-gray-500 mr-2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        <span class="text-gray-600 dark:text-gray-300">Create "</span><span x-text="searchTerm" class="font-medium"></span><span class="text-gray-600 dark:text-gray-300">"</span>
+                    <svg style="width: 20px; height: 20px; flex-shrink: 0;" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span class="truncate">
+                        Create "<span x-text="searchTerm" class="font-semibold"></span>"
                     </span>
                 </button>
 
