@@ -48,6 +48,7 @@ Replace your existing Select field with `CreateOnSearchSelect`:
 
 ```php
 use Xoshbin\FilamentCreateOnSearchSelect\CreateOnSearchSelect;
+use Filament\Forms\Components\TextInput;
 
 // Instead of this cluttered approach:
 // Select::make('category_id')
@@ -60,9 +61,16 @@ CreateOnSearchSelect::make('category_id')
     ->label('Category')
     ->options(Category::pluck('name', 'id'))
     ->canCreateOption()
+    ->createOptionForm([
+        TextInput::make('name')
+            ->label('Category Name')
+            ->required()
+            ->maxLength(255),
+    ])
     ->createOptionAction(function (array $data) {
         return Category::create([
             'name' => $data['name'],
+            'company_id' => auth()->user()->company_id,
         ]);
     })
 ```
@@ -71,32 +79,58 @@ CreateOnSearchSelect::make('category_id')
 
 #### Custom Create Form
 
-You can customize the form fields shown in the create modal:
+You can customize the form fields shown in the create modal using Filament form components:
 
 ```php
-CreateOnSearchSelect::make('category_id')
-    ->label('Category')
-    ->options(Category::pluck('name', 'id'))
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+
+CreateOnSearchSelect::make('customer_id')
+    ->label('Customer')
+    ->options(Partner::where('type', 'customer')->pluck('name', 'id'))
     ->canCreateOption()
-    ->createOptionForm('
-        <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Category Name
-            </label>
-            <input
-                type="text"
-                x-model="createOptionData.name"
-                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white sm:text-sm"
-                placeholder="Enter category name"
-                required
-            />
-        </div>
-    ')
+    ->createOptionForm([
+        TextInput::make('name')
+            ->label('Customer Name')
+            ->required()
+            ->maxLength(255),
+        TextInput::make('email')
+            ->label('Email Address')
+            ->email()
+            ->maxLength(255),
+        TextInput::make('phone')
+            ->label('Phone Number')
+            ->tel()
+            ->maxLength(20),
+        Textarea::make('address')
+            ->label('Address')
+            ->rows(3),
+    ])
     ->createOptionAction(function (array $data) {
-        return Category::create([
+        return Partner::create([
             'name' => $data['name'],
+            'email' => $data['email'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'address' => $data['address'] ?? null,
+            'type' => 'customer',
+            'company_id' => auth()->user()->company_id,
         ]);
     })
+```
+
+#### Required Livewire Method
+
+When using `CreateOnSearchSelect`, you must add this method to your Livewire component (Form, Resource Page, etc.):
+
+```php
+/**
+ * Required method for CreateOnSearchSelect functionality
+ */
+public function createNewOption(string $statePath, array $data)
+{
+    $field = $this->getFormComponent($statePath);
+    return $field->createNewOptionWithValidation($data);
+}
 ```
 
 #### Custom Modal Labels

@@ -4,9 +4,12 @@
     $createOptionModalSubmitActionLabel = $getCreateOptionModalSubmitActionLabel();
     $createOptionModalCancelActionLabel = $getCreateOptionModalCancelActionLabel();
     $createOptionLabelAttribute = $getCreateOptionLabelAttribute();
+    $createOptionFormSchema = $getCreateOptionFormSchema();
     $statePath = $getStatePath();
+    $modalId = $getId() . '-create-option';
 @endphp
 
+<x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
 <div
     {{
         $attributes
@@ -18,6 +21,8 @@
     x-data="{
         createOptionModalOpen: false,
         createOptionData: {},
+        createOptionErrors: {},
+        createOptionLoading: false,
         searchTerm: '',
         isOpen: false,
         selectedIndex: -1,
@@ -25,6 +30,11 @@
         showCreateOption: false,
 
         init() {
+            // Initialize from current selected option
+            const selected = this.$refs.select?.selectedOptions?.[0];
+            if (selected && selected.value) {
+                this.searchTerm = selected.textContent?.trim() ?? '';
+            }
             this.updateFilteredOptions();
         },
 
@@ -47,43 +57,57 @@
             this.createOptionData = {};
             this.createOptionData['{{ $createOptionLabelAttribute }}'] = this.searchTerm;
             this.isOpen = false;
+            this.$nextTick(() => this.$dispatch('open-modal', { id: '{{ $modalId }}' }))
         },
 
         closeCreateOptionModal() {
             this.createOptionModalOpen = false;
             this.createOptionData = {};
+            this.$dispatch('close-modal', { id: '{{ $modalId }}' })
         },
 
         async createOption() {
+            if (this.createOptionLoading) return;
+
+            this.createOptionLoading = true;
+            this.createOptionErrors = {};
+
             try {
                 // Call the Livewire component method to create the option
                 const response = await $wire.call('createNewOption', '{{ $statePath }}', this.createOptionData);
-                if (response) {
+                if (response && response.success) {
                     // Add the new option to the select
                     const select = this.$refs.select;
                     const newOption = document.createElement('option');
-                    newOption.value = response.id;
-                    newOption.textContent = response.{{ $createOptionLabelAttribute }} || response.name || response.title || response.label;
+                    newOption.value = response.record.id;
+                    newOption.textContent = response.record.label;
                     newOption.selected = true;
                     select.appendChild(newOption);
 
                     // Update the wire model
-                    $wire.set('{{ $statePath }}', response.id);
+                    $wire.set('{{ $statePath }}', response.record.id);
 
                     this.closeCreateOptionModal();
-                    this.searchTerm = '';
+                    this.searchTerm = newOption.textContent;
                     this.updateFilteredOptions();
+                    this.createOptionData = {};
+                } else if (response && response.errors) {
+                    this.createOptionErrors = response.errors;
                 }
             } catch (error) {
                 console.error('Error creating option:', error);
+                this.createOptionErrors = { general: ['An error occurred while creating the option.'] };
+            } finally {
+                this.createOptionLoading = false;
             }
         },
 
         selectOption(value) {
             this.$refs.select.value = value;
+            const option = Array.from(this.$refs.select.options).find(o => o.value == value);
+            this.searchTerm = option ? option.textContent.trim() : '';
             $wire.set('{{ $statePath }}', value);
             this.isOpen = false;
-            this.searchTerm = '';
         }
     }"
     x-load-css="[@js(\Filament\Support\Facades\FilamentAsset::getStyleHref('filament-create-on-search-select-styles', package: 'xoshbin/filament-create-on-search-select'))]"
@@ -97,6 +121,7 @@
                         ->merge($getExtraAttributes(), escape: false)
                         ->merge($getExtraInputAttributes(), escape: false)
                         ->class(['sr-only'])
+                        ->style('position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;')
                 }}
                 @if ($isAutofocused()) autofocus @endif
                 @if ($isDisabled()) disabled @endif
@@ -123,7 +148,7 @@
             </select>
 
             <!-- Custom search input that looks like Filament select -->
-            <div class="relative">
+            <div class="fi-input-wrp relative group" style="display:flex;align-items:center;gap:.75rem;border:1px solid rgba(17,24,39,0.1);border-radius:.5rem;background:#fff;padding:.25rem .5rem .25rem .75rem;">
                 <input
                     type="text"
                     x-model="searchTerm"
@@ -149,12 +174,12 @@
                     }}
                     placeholder="{{ $getPlaceholder() ?: 'Search or type to create...' }}"
                     @if ($isDisabled()) disabled @endif
-                    autocomplete="off"
+                    autocomplete="off" style="flex:1;border:0;outline:0;background:transparent;padding:.375rem 0;font-size:.875rem;"
                 />
 
                 <!-- Dropdown arrow -->
-                <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                    <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <div style="position:absolute; right:0.5rem; top:50%; transform:translateY(-50%); display:flex; align-items:center; pointer-events:none;">
+                    <svg style="width:1.25rem;height:1.25rem;color:#9ca3af" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                     </svg>
                 </div>
@@ -169,18 +194,18 @@
                 x-transition:leave="transition ease-in duration-75"
                 x-transition:leave-start="transform opacity-100 scale-100"
                 x-transition:leave-end="transform opacity-0 scale-95"
-                class="absolute z-50 mt-1 w-full bg-white shadow-lg max-h-60 rounded-lg py-1 text-base ring-1 ring-gray-950/5 overflow-auto focus:outline-none dark:bg-gray-900 dark:ring-white/10 sm:text-sm"
-                style="display: none;"
+                class="absolute z-50 mt-1 w-full"
+                style="display:none;position:absolute;z-index:50;margin-top:.25rem;width:100%;background:#fff;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05);border-radius:.5rem;padding:.25rem 0;max-height:15rem;overflow:auto;"
             >
                 <!-- Filtered options -->
                 <template x-for="(option, index) in filteredOptions" :key="option.value">
                     <div
-                        x-on:click="selectOption(option.value)"
+                        x-on:mousedown.prevent.stop="selectOption(option.value)"
                         x-bind:class="{
                             'bg-gray-50 text-gray-900 dark:bg-white/5 dark:text-white': selectedIndex === index,
                             'text-gray-900 dark:text-white': selectedIndex !== index
                         }"
-                        class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-50 dark:hover:bg-white/5"
+                        class="cursor-pointer select-none" style="padding:.5rem .75rem;"
                     >
                         <span x-text="option.textContent" class="block truncate"></span>
                     </div>
@@ -189,15 +214,15 @@
                 <!-- Create option suggestion -->
                 <div
                     x-show="showCreateOption"
-                    x-on:click="openCreateOptionModal()"
+                    x-on:mousedown.prevent.stop="openCreateOptionModal()"
                     x-bind:class="{
                         'bg-gray-50 text-gray-900 dark:bg-white/5 dark:text-white': selectedIndex === filteredOptions.length,
                         'text-gray-900 dark:text-white': selectedIndex !== filteredOptions.length
                     }"
-                    class="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-gray-50 dark:hover:bg-white/5 border-t border-gray-200 dark:border-gray-700"
+                    class="cursor-pointer select-none" style="padding:.5rem .75rem;border-top:1px solid #e5e7eb;"
                 >
                     <span class="flex items-center">
-                        <svg class="h-4 w-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg style="width:1rem;height:1rem;margin-right:0.5rem;color:#9ca3af;flex-shrink:0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
                         <span class="text-gray-600 dark:text-gray-300">Create "</span><span x-text="searchTerm" class="font-medium"></span><span class="text-gray-600 dark:text-gray-300">"</span>
@@ -214,62 +239,93 @@
             </div>
 
             @if ($canCreateOption)
-                <!-- Create Option Modal -->
-                <div
-                    x-show="createOptionModalOpen"
-                    x-transition.opacity
-                    class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/50 dark:bg-gray-950/75"
-                    style="display: none;"
-                >
-                    <div
-                        x-show="createOptionModalOpen"
-                        x-transition:enter="transition ease-out duration-300"
-                        x-transition:enter-start="opacity-0 transform scale-95"
-                        x-transition:enter-end="opacity-100 transform scale-100"
-                        x-transition:leave="transition ease-in duration-200"
-                        x-transition:leave-start="opacity-100 transform scale-100"
-                        x-transition:leave-end="opacity-0 transform scale-95"
-                        class="bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-md w-full mx-4 ring-1 ring-gray-950/5 dark:ring-white/10"
-                        x-on:click.away="closeCreateOptionModal()"
-                    >
-                        <div class="p-6">
-                            <h3 class="text-lg font-semibold text-gray-950 dark:text-white mb-4">
-                                {{ $createOptionModalHeading }}
-                            </h3>
+                <x-filament::modal id="{{ $modalId }}" width="md">
+                    <x-slot name="heading">{{ $createOptionModalHeading }}</x-slot>
 
-                            <div class="space-y-4">
-                                <div>
+                    <div class="space-y-4">
+                        @foreach ($createOptionFormSchema as $component)
+                            @php
+                                $componentName = $component->getName();
+                                $componentLabel = $component->getLabel();
+                                $componentType = class_basename($component);
+                                $isRequired = $component->isRequired();
+                                $placeholder = $component->getPlaceholder();
+                                $maxLength = method_exists($component, 'getMaxLength') ? $component->getMaxLength() : null;
+                            @endphp
+
+                            <div>
+                                @if ($componentLabel)
                                     <label class="block text-sm font-medium text-gray-950 dark:text-white mb-2">
-                                        {{ ucfirst(str_replace('_', ' ', $createOptionLabelAttribute)) }}
+                                        {{ $componentLabel }}
+                                        @if ($isRequired)
+                                            <span class="text-red-500">*</span>
+                                        @endif
                                     </label>
+                                @endif
+
+                                @if ($componentType === 'TextInput')
                                     <input
                                         type="text"
-                                        x-model="createOptionData.{{ $createOptionLabelAttribute }}"
+                                        x-model="createOptionData.{{ $componentName }}"
                                         class="block w-full rounded-lg border-0 py-1.5 text-gray-950 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:placeholder:text-gray-500 dark:focus:ring-primary-500 sm:text-sm sm:leading-6"
-                                        placeholder="Enter {{ strtolower(str_replace('_', ' ', $createOptionLabelAttribute)) }}"
-                                        required
+                                        @if ($placeholder) placeholder="{{ $placeholder }}" @endif
+                                        @if ($isRequired) required @endif
+                                        @if ($maxLength) maxlength="{{ $maxLength }}" @endif
                                     />
-                                </div>
-                            </div>
+                                @elseif ($componentType === 'Textarea')
+                                    <textarea
+                                        x-model="createOptionData.{{ $componentName }}"
+                                        class="block w-full rounded-lg border-0 py-1.5 text-gray-950 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:bg-white/5 dark:text-white dark:ring-white/10 dark:placeholder:text-gray-500 dark:focus:ring-primary-500 sm:text-sm sm:leading-6"
+                                        @if ($placeholder) placeholder="{{ $placeholder }}" @endif
+                                        @if ($isRequired) required @endif
+                                        rows="3"
+                                    ></textarea>
+                                @endif
 
-                            <div class="mt-6 flex justify-end space-x-3">
-                                <button
-                                    type="button"
-                                    x-on:click="closeCreateOptionModal()"
-                                    class="px-3 py-2 text-sm font-semibold text-gray-900 bg-white rounded-lg shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:ring-white/20 dark:hover:bg-white/20"
-                                >
-                                    {{ $createOptionModalCancelActionLabel }}
-                                </button>
-                                <button
-                                    type="button"
-                                    x-on:click="createOption()"
-                                    class="px-3 py-2 text-sm font-semibold text-white bg-primary-600 rounded-lg shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                >
-                                    {{ $createOptionModalSubmitActionLabel }}
-                                </button>
+                                @if (isset($createOptionErrors[$componentName]))
+                                    <div class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                        @foreach ((array) $createOptionErrors[$componentName] as $error)
+                                            <div>{{ $error }}</div>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </div>
-                        </div>
+                        @endforeach
+
+                        @if (isset($createOptionErrors['general']))
+                            <div class="text-sm text-red-600 dark:text-red-400">
+                                @foreach ((array) $createOptionErrors['general'] as $error)
+                                    <div>{{ $error }}</div>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
-                </div>
+
+                    <x-slot name="footer">
+                        <x-filament::button
+                            color="gray"
+                            x-on:click="closeCreateOptionModal()"
+                            x-bind:disabled="createOptionLoading"
+                        >
+                            {{ $createOptionModalCancelActionLabel }}
+                        </x-filament::button>
+                        <x-filament::button
+                            color="primary"
+                            x-on:click="createOption()"
+                            x-bind:disabled="createOptionLoading"
+                            x-bind:class="{ 'opacity-50': createOptionLoading }"
+                        >
+                            <span x-show="!createOptionLoading">{{ $createOptionModalSubmitActionLabel }}</span>
+                            <span x-show="createOptionLoading" class="flex items-center">
+                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Creating...
+                            </span>
+                        </x-filament::button>
+                    </x-slot>
+                </x-filament::modal>
             @endif
 </div>
+</x-dynamic-component>
