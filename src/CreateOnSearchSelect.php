@@ -12,14 +12,7 @@ class CreateOnSearchSelect extends Select
 {
     protected string $view = 'filament-create-on-search-select::create-on-search-select';
 
-    // Backwards-compatible properties for developers using this package API
-    protected string | Closure | null $createOptionModalHeading = null;
-
-    protected string | Closure | null $createOptionModalSubmitActionLabel = null;
-
-    protected string | Closure | null $createOptionModalCancelActionLabel = null;
-
-    protected ?Closure $createOptionAction = null; // developer callback returning Model
+    protected ?Closure $createOptionAction = null;
 
     protected bool | Closure $canCreateOption = false;
 
@@ -32,10 +25,6 @@ class CreateOnSearchSelect extends Select
         parent::setUp();
 
         $this->searchable();
-        $this->createOptionModalHeading('Create New Option');
-        $this->createOptionModalSubmitActionLabel('Create');
-        $this->createOptionModalCancelActionLabel('Cancel');
-        $this->createOptionLabelAttribute('name');
 
         // Hide native suffix "+" icon; open via the "Create \"term\"" suggestion instead.
         $this->suffixActions([]);
@@ -57,17 +46,6 @@ class CreateOnSearchSelect extends Select
         } catch (\Error) {
             // Component not properly initialized (e.g., in tests)
             return null;
-        }
-
-        // Apply modal labels if provided via our back-compat API
-        if (method_exists($action, 'modalHeading') && ($heading = $this->getCreateOptionModalHeading())) {
-            $action->modalHeading($heading);
-        }
-        if (method_exists($action, 'modalSubmitActionLabel') && ($label = $this->getCreateOptionModalSubmitActionLabel())) {
-            $action->modalSubmitActionLabel($label);
-        }
-        if (method_exists($action, 'modalCancelActionLabel') && ($label = $this->getCreateOptionModalCancelActionLabel())) {
-            $action->modalCancelActionLabel($label);
         }
 
         // Pre-fill the form with the current search term when opening the modal.
@@ -130,27 +108,6 @@ class CreateOnSearchSelect extends Select
         return $this;
     }
 
-    public function createOptionModalHeading(string | Closure | null $heading): static
-    {
-        $this->createOptionModalHeading = $heading;
-
-        return $this;
-    }
-
-    public function createOptionModalSubmitActionLabel(string | Closure | null $label): static
-    {
-        $this->createOptionModalSubmitActionLabel = $label;
-
-        return $this;
-    }
-
-    public function createOptionModalCancelActionLabel(string | Closure | null $label): static
-    {
-        $this->createOptionModalCancelActionLabel = $label;
-
-        return $this;
-    }
-
     // Bridge legacy API to Filament v4 Select's createOptionUsing(),
     // which expects the closure to return the created option's key.
     public function createOptionAction(?Closure $action): static
@@ -193,21 +150,6 @@ class CreateOnSearchSelect extends Select
     public function getCreateOptionForm(): array | string | null
     {
         return $this->evaluate($this->createOptionForm);
-    }
-
-    public function getCreateOptionModalHeading(): ?string
-    {
-        return $this->evaluate($this->createOptionModalHeading);
-    }
-
-    public function getCreateOptionModalSubmitActionLabel(): ?string
-    {
-        return $this->evaluate($this->createOptionModalSubmitActionLabel);
-    }
-
-    public function getCreateOptionModalCancelActionLabel(): ?string
-    {
-        return $this->evaluate($this->createOptionModalCancelActionLabel);
     }
 
     public function getCanCreateOption(): bool
