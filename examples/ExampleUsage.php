@@ -6,12 +6,10 @@ use App\Models\Customer;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Pages\CreateRecord;
-use Xoshbin\FilamentCreateOnSearchSelect\Concerns\HasCreateOnSearchSelect;
 use Xoshbin\FilamentCreateOnSearchSelect\CreateOnSearchSelect;
 
 class CreateInvoice extends CreateRecord
 {
-    use HasCreateOnSearchSelect; // Required trait for CreateOnSearchSelect functionality
 
     protected static string $resource = InvoiceResource::class;
 

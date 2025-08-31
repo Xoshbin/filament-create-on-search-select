@@ -102,14 +102,4 @@ class CreateInvoice extends CreateRecord
             ]);
     }
 
-    /**
-     * Required Livewire method for create option functionality
-     * This method must be added to any Livewire component that uses CreateOnSearchSelect
-     */
-    public function createNewOption(string $statePath, array $data)
-    {
-        $field = $this->getFormComponent($statePath);
-
-        return $field->createNewOptionWithValidation($data);
-    }
 }
