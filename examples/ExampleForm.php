@@ -101,5 +101,4 @@ class CreateInvoice extends CreateRecord
                     ->columnSpan(1),
             ]);
     }
-
 }

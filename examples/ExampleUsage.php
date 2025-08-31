@@ -10,7 +10,6 @@ use Xoshbin\FilamentCreateOnSearchSelect\CreateOnSearchSelect;
 
 class CreateInvoice extends CreateRecord
 {
-
     protected static string $resource = InvoiceResource::class;
 
     public function form(Form $form): Form
