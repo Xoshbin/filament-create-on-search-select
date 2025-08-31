@@ -236,7 +236,7 @@ class CreateOnSearchSelect extends Select
     }
 
     public function getCreateNewOptionMethod(): string
-    { 
+    {
         return 'createNewOption';
     }
 
