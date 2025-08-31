@@ -218,16 +218,6 @@ class CreateOnSearchSelect extends Select
         return (string) $record->getKey();
     }
 
-    /**
-     * This method should be called from the Livewire component that uses this field
-     * Add this to your Livewire component:
-     *
-     * public function createNewOption(string $statePath, array $data)
-     * {
-     *     $field = $this->getFormComponent($statePath);
-     *     return $field->createNewOptionWithValidation($data);
-     * }
-     */
     public function getCreateNewOptionMethod(): string
     {
         return 'createNewOption';
@@ -240,15 +230,6 @@ class CreateOnSearchSelect extends Select
     public function handleCreateNewOption(array $data): array
     {
         try {
-            // Validate the data against the form schema
-            $errors = $this->validateCreateOptionData($data);
-            if (! empty($errors)) {
-                return [
-                    'success' => false,
-                    'errors' => $errors,
-                ];
-            }
-
             // Create the record
             $record = $this->createOption($data);
 
@@ -265,67 +246,5 @@ class CreateOnSearchSelect extends Select
                 'errors' => ['general' => [$e->getMessage()]],
             ];
         }
-    }
-
-    /**
-     * Create a new option with validation and proper response structure
-     */
-    public function createNewOptionWithValidation(array $data): array
-    {
-        try {
-            // Validate the data against the form schema
-            $errors = $this->validateCreateOptionData($data);
-            if (! empty($errors)) {
-                return [
-                    'success' => false,
-                    'errors' => $errors,
-                ];
-            }
-
-            // Create the record
-            $record = $this->createOption($data);
-
-            return [
-                'success' => true,
-                'record' => [
-                    'id' => $record->getKey(),
-                    'label' => $this->getCreatedOptionLabel($record),
-                ],
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'errors' => ['general' => [$e->getMessage()]],
-            ];
-        }
-    }
-
-    /**
-     * Validate create option data against the form schema
-     */
-    public function validateCreateOptionData(array $data): array
-    {
-        $errors = [];
-        $schema = $this->getCreateOptionFormSchema();
-
-        foreach ($schema as $component) {
-            $name = $component->getName();
-            $value = $data[$name] ?? null;
-
-            // Check required fields
-            if ($component->isRequired() && empty($value)) {
-                $errors[$name][] = 'This field is required.';
-            }
-
-            // Check max length for text inputs
-            if (method_exists($component, 'getMaxLength') && $component->getMaxLength()) {
-                $maxLength = $component->getMaxLength();
-                if (strlen($value) > $maxLength) {
-                    $errors[$name][] = "This field must not exceed {$maxLength} characters.";
-                }
-            }
-        }
-
-        return $errors;
     }
 }
