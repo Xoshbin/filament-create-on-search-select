@@ -218,8 +218,25 @@ class CreateOnSearchSelect extends Select
         return (string) $record->getKey();
     }
 
-    public function getCreateNewOptionMethod(): string
+    public function getSearchResults(string $search): array
     {
+        $results = parent::getSearchResults($search);
+
+        if ($this->getCanCreateOption()) {
+            $exactMatch = collect($results)->some(function ($label) use ($search) {
+                return strtolower($label) === strtolower($search);
+            });
+
+            if (! $exactMatch && ! empty($search)) {
+                $results['__create_option__'] = $search;
+            }
+        }
+
+        return $results;
+    }
+
+    public function getCreateNewOptionMethod(): string
+    { 
         return 'createNewOption';
     }
 
